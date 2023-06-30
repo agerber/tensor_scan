@@ -20,14 +20,18 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Point
 import android.graphics.Rect
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
+import org.tensorflow.lite.task.gms.vision.detector.Detection
 import java.util.LinkedList
 import kotlin.math.max
-import org.tensorflow.lite.task.gms.vision.detector.Detection
+
 
 class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
@@ -35,6 +39,14 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
     private var boxPaint = Paint()
     private var textBackgroundPaint = Paint()
     private var textPaint = Paint()
+    private var buttonPaint = Paint()
+    private var buttonTextPaint = Paint()
+
+    //the size of this OverlayView
+    private var highestScore = 0f
+    private lateinit var highestResult: Detection
+
+
 
     private var scaleFactor: Float = 1f
 
@@ -61,9 +73,49 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
         textPaint.style = Paint.Style.FILL
         textPaint.textSize = 50f
 
+        buttonTextPaint.color = Color.WHITE
+        buttonTextPaint.style = Paint.Style.FILL
+        buttonTextPaint.textSize = 100f
+
         boxPaint.color = ContextCompat.getColor(context!!, R.color.bounding_box_color)
         boxPaint.strokeWidth = 8F
         boxPaint.style = Paint.Style.STROKE
+
+        buttonPaint.color = ContextCompat.getColor(context!!, R.color.button_color)
+        buttonPaint.strokeWidth = 8F
+        buttonPaint.style = Paint.Style.FILL_AND_STROKE
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        super.onTouchEvent(event)
+        when (event.action) {
+
+            MotionEvent.ACTION_DOWN -> {
+
+                val measuredY = this.measuredHeight.toFloat()
+                val buttonHeight =  measuredY * 0.2
+                val inBounds = event.y >  (measuredY - buttonHeight)
+                if (inBounds){
+                    Log.d("TOUCH", "BUTTON TOUCHED: ${highestResult.categories[0].label}")
+                }
+
+                return true
+            }
+
+//            MotionEvent.ACTION_UP -> {
+//               // Log.d("TOUCH", "UP: $event.x : $event.y")
+//                val xMe = this.measuredWidth
+//                val yMe = this.measuredHeight
+//                Log.d("TOUCH", "UP: $xMe : $yMe.y")
+//
+//                // For this particular app we want the main work to happen
+//                // on ACTION_UP rather than ACTION_DOWN. So this is where
+//                // we will call performClick().
+//               // performClick()
+//                return true
+//            }
+        }
+        return false
     }
 
     override fun draw(canvas: Canvas) {
@@ -71,8 +123,8 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
 
         if (results.size < 1) return
         //assume the first one is the highestScore
-        var highestScore = results[0].categories[0].score
-        var highestResult = results[0]
+         highestScore = results[0].categories[0].score
+         highestResult = results[0]
         for (nC in 0 until results.size) {
 
             //find the highestResult
@@ -114,7 +166,17 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
             // Draw text for detected object
             canvas.drawText(drawableText, left, top + bounds.height(), textPaint)
         }//end for loop
-        canvas.drawText(highestResult.categories[0].label, 30f, 30f, textPaint)
+
+
+            val measuredX = this.measuredWidth.toFloat()
+            val measuredY = this.measuredHeight.toFloat()
+            val buttonHeight =  measuredY * 0.2
+            val buttonRect = RectF(0f,   (measuredY - buttonHeight).toFloat(),  measuredX, measuredY)
+            canvas.drawRect(buttonRect, buttonPaint)
+            val label = highestResult.categories[0].label
+            canvas.drawText(label.toUpperCase(), (measuredX / 2), measuredY - (buttonHeight / 2).toFloat(), buttonTextPaint)
+
+
     }
 
     fun setResults(
