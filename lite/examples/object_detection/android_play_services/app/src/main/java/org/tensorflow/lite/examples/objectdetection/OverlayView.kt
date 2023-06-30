@@ -69,7 +69,19 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
 
-        for (result in results) {
+        //assume the first one is the highestScore
+        var highestScore = results[0].categories[0].score
+        var highestResult = results[0]
+        for (nC in 0 until results.size) {
+
+            //find the highestResult
+            if (nC > 0 && results[nC].categories[0].score > highestScore) {
+                highestScore = results[nC].categories[0].score
+                highestResult = results[nC]
+            }
+
+
+            val result = results[nC]
             val boundingBox = result.boundingBox
 
             val top = boundingBox.top * scaleFactor
@@ -100,7 +112,8 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
 
             // Draw text for detected object
             canvas.drawText(drawableText, left, top + bounds.height(), textPaint)
-        }
+        }//end for loop
+        canvas.drawText(highestResult.categories[0].label, 30f, 30f, textPaint)
     }
 
     fun setResults(
