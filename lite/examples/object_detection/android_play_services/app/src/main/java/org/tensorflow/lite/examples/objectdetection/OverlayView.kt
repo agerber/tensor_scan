@@ -69,6 +69,7 @@ class OverlayView(context: Context?, attrs: AttributeSet?) : View(context, attrs
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
 
+        if (results.size < 1) return
         //assume the first one is the highestScore
         var highestScore = results[0].categories[0].score
         var highestResult = results[0]
